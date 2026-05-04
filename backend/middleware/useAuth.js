@@ -1,0 +1,19 @@
+import jwt from 'jsonwebtoken'
+
+export const useAuth = (req, res, next) => {
+    const header = req.headers.authorization
+
+    if (!header) {
+        return res.status(401).send('Unauthorized')
+    }
+
+    const token = header.split(' ')[1]
+
+    try {
+        const decoded = jwt.verify(token, "SECRET_KEY")
+        req.user = decoded
+        next();
+    } catch (error) {
+        return res.status(401).send('Invalid token')
+    }
+}
