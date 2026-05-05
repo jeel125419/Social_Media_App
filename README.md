@@ -16,4 +16,4 @@
 
 ## Roles 
 
-our frontend will show main data and backend will handle all other king of things and we will add authorization too
+our frontend will show main data and backend will handle all other kind of things and we will add authorization too
