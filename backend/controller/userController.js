@@ -124,3 +124,32 @@ export const likePost = async (req, res) => {
     const like = await Like.create({user: userId, post: postId})
     res.json({message: 'Post liked successfully', like})
 }
+
+export const getPost = async (req, res) => {
+    const post = await Post.find().populate("user", "username").sort({createdAt: -1})
+    res.json({message: 'Posts retrieved successfully', post})
+}
+
+export const getPostById = async (req, res) => {
+    const postId = req.params.postId
+
+    const post = await Post.findById(postId).populate("user", "username")
+
+    if (!post){
+        return res.status(400).json({message: 'Post not found'})
+    }
+
+    res.json({message: 'Post retrieved successfully', post})
+}
+
+export const getComments = async (req, res) => {
+    const postId = req.params.postId
+
+    const comments = await Comment.find({post: postId}).populate("user", "username").sort({createdAt: -1})
+
+    res.json({message: 'Comments retrieved successfully', comments})
+}
+
+export const getLikes = async (req, res) => {
+    const likes = await Like.find().populate("user", "user, post")
+}
