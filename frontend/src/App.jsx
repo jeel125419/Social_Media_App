@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { Routes, Route, Link, useNavigate } from 'react-router-dom'
-import SighIn from './components/Register'
-import LogIn from './components/LogIn'
+import SighIn from './pages/Register'
+import LogIn from './pages/LogIn'
 import ProtectRoutes from './components/ProtectRoutes'
 import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
-import PostPage from './components/PostPage'
+import PostPage from './pages/PostPage'
 
 function App() {
   const navigation = useNavigate()
@@ -14,17 +14,18 @@ function App() {
 
   return (
     <>
-      <nav>
-        <Link to="/">Home</Link>
-        {!token && <Link to="/register">Register</Link>}
-        {!token && <Link to="/login">Log In</Link>}
-        {token && <Link to="/dashboard">Dashboard</Link>}
+      <nav className='flex gap-4 p-4 bg-gray-200 fixed top-4 left-4 right-4 rounded-md z-10 justify-end'>
+        <Link to="/" className="bg-amber-500 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-amber-600">Home</Link>
+        {!token && <Link to="/register" className="bg-amber-500 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-amber-600">Register</Link>}
+        {!token && <Link to="/login" className="bg-amber-500 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-amber-600">Log In</Link>}
+        {token && <Link to="/dashboard" className="bg-amber-500 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-amber-600">Dashboard</Link>}
 
         {
           token && <button onClick={()=> {
             localStorage.removeItem('token')
+            localStorage.removeItem('username')
             navigation('/')
-          }}>Log Out</button>
+          }} className="bg-red-600 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-red-700">Log Out</button>
         }
 
       </nav>
