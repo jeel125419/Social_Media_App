@@ -14,7 +14,7 @@ function Likes() {
         const fetchPost = async () => {
             try {
                 const response = await api.get(`/post/${postId}/likes`)
-                console.log("BACKEND GET RESPONSE:", response.data)
+                // console.log("BACKEND GET RESPONSE:", response.data)
 
                 setIsLiked(response.data.isLikedByMe)
                 setLikesCount(response.data.totalLikes)

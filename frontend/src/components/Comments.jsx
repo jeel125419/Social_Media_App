@@ -12,6 +12,7 @@ function Comments() {
     const [comments, setComments] = useState([])
     const [loading, setLoading] = useState(false)
     const editCommentRef = useRef()
+    const [openMenu, setOpenMenu] = useState(null)
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -32,8 +33,9 @@ function Comments() {
     const handleDeleteComment = async (commentId) => {
         try {
             let confirm = window.confirm("you want to delete this comment?")
-            if(confirm){
+            if (confirm) {
                 await api.delete(`/post/${postId}/${commentId}`)
+                setOpenMenu(null)
             }
         } catch (e) {
             console.log(e)
@@ -61,12 +63,12 @@ function Comments() {
         // }, 100)
     }
     // This effect watches for when an edit session starts
-useEffect(() => {
-    // Make sure we actually have an active comment ID and the ref is ready
-    if (updateCommentId && editCommentRef.current) {
-        editCommentRef.current.focus();
-    }
-}, [updateCommentId]);
+    useEffect(() => {
+        // Make sure we actually have an active comment ID and the ref is ready
+        if (updateCommentId && editCommentRef.current) {
+            editCommentRef.current.focus();
+        }
+    }, [updateCommentId]);
 
     const handleCancel = () => {
         setUpdateCommentId()
@@ -86,69 +88,119 @@ useEffect(() => {
         }
     }
 
+    const handleOpenMenu = (id) => {
+        setOpenMenu(openMenu === id ? null : id)
+    }
+
+    const btnColor = commentText.trim() === '' ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-400 cursor-pointer'
+
     return (
 
         <div>
 
-            <div>
-                <input className="border rounded-md" type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                        handleComment()
+            <div className="gap-3 flex flex-col items-center justify-center">
+                <div>
+                    <input className="border rounded-md w-100 h-10 p-3 border-[#E2E8F0] focus:outline-none focus:ring-1 focus:ring-blue-500" type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                            handleComment()
+                        }
+                    }} placeholder='Type your comment here' />
+                </div>
+                <div>
+                    {
+                        loading ? 'Posting Comment...' :
+                            <button className={` ${btnColor} rounded-md text-white w-100 h-10 p-3 flex items-center justify-center`} onClick={handleComment} disabled={commentText.trim() === ''}>
+                                Post your Comment
+                            </button>
                     }
-                }} placeholder='Type your comment here'  />
-                {
-                    loading ? 'Posting Comment...' : commentText ? <button className="bg-emerald-300 rounded-md cursor-pointer" onClick={handleComment}>Post your Comment</button> : ''
-                }
+                </div>
+
 
             </div>
             <div>
                 <h4>Comments</h4>
+                <h5>{comments.length} Total comments</h5>
+                <div className='flex flex-col gap-2'>
 
-                {
-                    comments.length === 0 ?
-                        "be first to comment"
-                        : comments.map((comment) => (
-                            <div key={comment._id} className="flex justify-between">
-                                <div>
-                                    <b>{comment.user?.username}:</b> {comment.text}
-                                </div>
-
-                                <div className="gap-2.5">
-                                    {
-                                        comment.user?.username === username ?
-                                            <div className="flex gap-1">
-                                                <button className="bg-red-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleDeleteComment(comment._id) }}>
-                                                    delete
-                                                </button>
-                                                {
-                                                    updateCommentId === comment._id && <div className="flex gap-1">
-                                                        <input type="text" value={updateText} onChange={(e) => setUpdateText(e.target.value)} onKeyDown={(e) => {
-                                                            if (e.key === 'Enter') {
-                                                                handleUpdateComment(comment._id)
-                                                            }
-                                                            if (e.key === 'Escape') {
-                                                                handleCancel()
-                                                            }
-                                                        }} ref={editCommentRef} />
-                                                        <button className="bg-blue-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleUpdateComment(comment._id) }}>save</button>
-                                                        <button className='bg-gray-400 rounded-md cursor-pointer hover:scale-125 transition-transform' onClick={() => { handleCancel() }}>Cancel</button>
-                                                    </div>
-                                                }
-
-                                                {
-                                                    updateCommentId != comment._id && <button className="bg-green-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleEdit(comment._id, comment.text) }}>
-                                                    Edit
-                                                </button>
-                                                }
-                                                
+                    {
+                        comments.length === 0 ?
+                            "be first to comment"
+                            : comments.map((comment) => (
+                                <div key={comment._id} className='h-20 w-100 border bg-white border-[#E2E8F0] rounded-md shadow-xl m-2 flex justify-between'>
+                                    <div className='flex gap-2 m-3'>
+                                        <div className='h-12 w-12 rounded-full flex justify-center items-center font-bold bg-[#D9D9D9]'>
+                                            {comment.user?.username[0].toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <div className='text-sm text-gray-600'>
+                                                {comment.user?.username}
                                             </div>
-                                            : ''
-                                    }
-
+                                            <div>
+                                                {comment.text}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className='m-3'>
+                                        <button className='cursor-pointer' onClick={() => { handleOpenMenu(comment._id) }}>
+                                            &#8942;
+                                        </button>
+                                        <div className='relative'>
+                                            {
+                                                comment._id === openMenu && <div className='absolute top-0 right-0 z-10 h-20 w-20 border rounded-md'>
+                                                    <button className='p-2 w-full cursor-pointer'>
+                                                        Edit
+                                                    </button>
+                                                    <button className='p-2 w-full cursor-pointer' onClick={() => { handleDeleteComment(comment._id) }}>
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        ))
-                }
+                                // <div key={comment._id} className="flex justify-between">
+                                //     <div>
+                                //         <b>{comment.user?.username}:</b> {comment.text}
+                                //     </div>
+
+                                //     <div className="gap-2.5">
+                                //         {
+                                //             comment.user?.username === username ?
+                                //                 <div className="flex gap-1">
+                                //                     <button className="bg-red-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleDeleteComment(comment._id) }}>
+                                //                         delete
+                                //                     </button>
+                                //                     {
+                                //                         updateCommentId === comment._id && <div className="flex gap-1">
+                                //                             <input type="text" value={updateText} onChange={(e) => setUpdateText(e.target.value)} onKeyDown={(e) => {
+                                //                                 if (e.key === 'Enter') {
+                                //                                     handleUpdateComment(comment._id)
+                                //                                 }
+                                //                                 if (e.key === 'Escape') {
+                                //                                     handleCancel()
+                                //                                 }
+                                //                             }} ref={editCommentRef} />
+                                //                             <button className="bg-blue-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleUpdateComment(comment._id) }}>save</button>
+                                //                             <button className='bg-gray-400 rounded-md cursor-pointer hover:scale-125 transition-transform' onClick={() => { handleCancel() }}>Cancel</button>
+                                //                         </div>
+                                //                     }
+
+                                //                     {
+                                //                         updateCommentId != comment._id && <button className="bg-green-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleEdit(comment._id, comment.text) }}>
+                                //                             Edit
+                                //                         </button>
+                                //                     }
+
+                                //                 </div>
+                                //                 : ''
+                                //         }
+
+                                //     </div>
+                                // </div>
+                            ))
+                    }
+                </div>
+
 
             </div>
 

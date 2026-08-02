@@ -14,6 +14,21 @@ function App() {
 
   return (
     <>
+      {/* <nav className='flex gap-4 p-4 bg-gray-200 fixed top-4 left-4 right-4 rounded-md z-10 justify-end'>
+        <Link to="/" className="bg-amber-500 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-amber-600">Home</Link>
+        {!token && <Link to="/register" className="bg-amber-500 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-amber-600">Register</Link>}
+        {!token && <Link to="/login" className="bg-amber-500 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-amber-600">Log In</Link>}
+        {token && <Link to="/dashboard" className="bg-amber-500 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-amber-600">Dashboard</Link>}
+
+        {
+          token && <button onClick={()=> {
+            localStorage.removeItem('token')
+            localStorage.removeItem('username')
+            navigation('/')
+          }} className="bg-red-600 cursor-pointer hover:scale-125 transition-transform rounded-md p-2 hover:bg-red-700">Log Out</button>
+        }
+
+      </nav> */}
       <nav className='flex gap-4 p-2 bg-white fixed top-4 left-4 right-4 rounded-md z-10 justify-between'>
         <div className='flex gap-8 justify-center items-center'>
         <Link to="/" className="cursor-pointer hover:bg-[#DBEAFE] p-2 rounded-2xl text-[#475569] hover:text-[#2563EB] border border-transparent border-[#E2E8F0] hover:border-[#E2E8F0] hover:box-border transition-all duration-200">Home</Link>
