@@ -1,12 +1,15 @@
 import mongoose from "mongoose";
+import dotenv from "dotenv";
 
-const MONGO_URI = "mongodb://127.0.0.1:27017/social_media_app";
+dotenv.config();
+
+const MONGO_URI = process.env.MONGODB_URI;
 
 export const connectDB = async () => {
-    try {
-        await mongoose.connect(MONGO_URI);
-        console.log("Connected to MongoDB");
-    } catch (e) {
-        console.error("Error connecting to MongoDB:", e);
+    if (!MONGO_URI) {
+        throw new Error("MONGODB_URI is missing from .env");
     }
-}
+
+    await mongoose.connect(MONGO_URI, { family: 4 });
+    console.log("Connected to MongoDB");
+};
