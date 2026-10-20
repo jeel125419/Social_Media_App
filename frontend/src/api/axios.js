@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:3000',
+    baseURL: 'https://social-media-backend-19ir.onrender.com',
 })
 
 api.interceptors.request.use((config) => {
