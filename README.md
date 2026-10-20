@@ -1,5 +1,9 @@
 # Social Media App
 
+## Deployed Link:
+
+https://social-media-app-xi-eight.vercel.app/
+
 ## Features we will add
 
 * auth (Login and register)

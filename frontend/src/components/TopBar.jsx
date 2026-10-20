@@ -38,9 +38,9 @@ function TopBar({ sortBy, setSortBy, setPosts, refresh, setRefresh, fetchPosts, 
 
     return (
         <div>
-            <div className='flex justify-between items-center m-3 p-3 border border-[#E2E8F0] rounded-md'>
-                <div className='flex gap-2'>
-                    <input type="text" className='rounded-md p-1 bg-[#ededed] focus:outline-none focus:ring-1 focus:bg-white focus:ring-blue-500' value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => {
+            <div className='topbar-controls flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap sm:justify-between sm:items-center gap-3 m-1 sm:m-3 p-3 border border-[#E2E8F0] rounded-md'>
+                <div className='create-post-controls flex flex-wrap items-center gap-2 w-full sm:w-auto'>
+                    <input type="text" className='min-w-0 w-full sm:w-56 rounded-md p-2 bg-[#ededed] focus:outline-none focus:ring-1 focus:bg-white focus:ring-blue-500' value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => {
                         if (e.key === "Enter") {
                             e.preventDefault()
                             handleCreatePost()
@@ -54,14 +54,14 @@ function TopBar({ sortBy, setSortBy, setPosts, refresh, setRefresh, fetchPosts, 
                     }
                 </div>
                 <div>
-                    <input type='text' placeholder='Search posts...' className='rounded-md p-1 bg-[#ededed] focus:outline-none focus:ring-1 focus:bg-white focus:ring-blue-500' value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyDown={(e) => {
+                    <input type='text' placeholder='Search posts...' className='w-full sm:w-56 min-w-0 rounded-md p-2 bg-[#ededed] focus:outline-none focus:ring-1 focus:bg-white focus:ring-blue-500' value={searchText} onChange={(e) => setSearchText(e.target.value)} onKeyDown={(e) => {
                         if (e.key === "Enter") {
                             handleSearch()
                         }
                     }} />
                 </div>
-                <div>
-                    <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <div className="w-full sm:w-auto">
+                    <select className="w-full sm:w-auto rounded-md border border-slate-200 bg-white p-2" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                         <option>Newest</option>
                         <option>Oldest</option>
                     </select>

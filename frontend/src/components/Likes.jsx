@@ -1,59 +1,86 @@
+
 import { useState, useEffect } from 'react'
-import api from '../api/axios';
-import { useParams } from 'react-router-dom';
+import api from '../api/axios'
+import { useParams } from 'react-router-dom'
 
 function Likes() {
-
     const { postId } = useParams()
-    const [refresh, setRefresh] = useState(false)
+
     const [likesCount, setLikesCount] = useState(0)
     const [isLiked, setIsLiked] = useState(false)
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
+    const [updating, setUpdating] = useState(false)
 
     useEffect(() => {
-        const fetchPost = async () => {
+        let cancelled = false
+
+        const fetchLikes = async () => {
+            setLoading(true)
+
             try {
                 const response = await api.get(`/post/${postId}/likes`)
-                // console.log("BACKEND GET RESPONSE:", response.data)
 
-                setIsLiked(response.data.isLikedByMe)
-                setLikesCount(response.data.totalLikes)
+                if (!cancelled) {
+                    setIsLiked(response.data.isLikedByMe)
+                    setLikesCount(response.data.totalLikes)
+                }
             } catch (e) {
-                console.log(e)
+                console.error('Failed to fetch likes:', e)
             } finally {
-                setLoading(false)
+                if (!cancelled) setLoading(false)
             }
         }
-        fetchPost()
+
+        fetchLikes()
+
+        return () => {
+            cancelled = true
+        }
     }, [postId])
 
     const handleLikes = async () => {
+        if (updating) return
+
         try {
+            setUpdating(true)
+
             const response = await api.post(`/post/${postId}/like`)
             setIsLiked(response.data.isLikedByMe)
             setLikesCount(response.data.totalLikes)
         } catch (e) {
-            console.log(e);
-        } 
+            console.error('Failed to update like:', e)
+        } finally {
+            setUpdating(false)
+        }
     }
-
-    const currentUsername = localStorage.getItem('username') 
-
-    // console.log(likesCount, isLiked)
 
     if (loading) {
         return (
-            <div className="animate-pulse bg-gray-300 h-9 w-20 rounded-md"></div>
+            <div className="flex min-h-9 w-full justify-center sm:justify-start">
+                <div
+                    className="h-9 w-20 animate-pulse rounded-md bg-gray-200"
+                    role="status"
+                    aria-label="Loading likes"
+                />
+            </div>
         )
     }
 
     return (
-        <div>
-            <button className={`cursor-pointer rounded-md px-3 py-1.5 transition-colors hover:scale-125 ${
-                    isLiked 
-                        ? "bg-pink-500 text-white" 
-                        : "bg-gray-200 text-gray-800"
-                }`} onClick={handleLikes}>Like: {likesCount}</button>
+        <div className="flex w-full min-w-0 items-center">
+            <button
+                type="button"
+                onClick={handleLikes}
+                disabled={updating}
+                aria-pressed={isLiked}
+                className={`max-w-full cursor-pointer rounded-md px-3 py-2 transition-colors disabled:cursor-wait ${
+                    isLiked
+                        ? 'bg-pink-500 text-white'
+                        : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                }`}
+            >
+                {updating ? 'Updating...' : `Like: ${likesCount}`}
+            </button>
         </div>
     )
 }

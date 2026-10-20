@@ -46,21 +46,21 @@ function Register() {
     }
 
   return (
-    <div className='flex justify-center items-center bg-[#F8FAFC] h-screen'>
-      <div className='bg-white h-125 w-175 rounded-[10px] shadow-lg border border-[#E2E8F0] flex flex-col items-center justify-center'>
+    <div className='auth-page flex justify-center items-center bg-[#F8FAFC] min-h-screen px-3 py-20 sm:py-8'>
+      <div className='bg-white min-h-[31rem] w-full max-w-2xl px-4 sm:px-8 py-8 rounded-[10px] shadow-lg border border-[#E2E8F0] flex flex-col items-center justify-center'>
         <div className="flex flex-col justify-center items-center gap-1">
-          <h1 className='text-[32px] font-bold text-[#0F172A] font-family-["Iosevka Charon"]'>Create an Account</h1>
-          <h1 className='text-[24px] font-normal text-[#64748B] font-family-["Iosevka Charon"]'>Join Us Today</h1>
+          <h1 className='text-2xl sm:text-[32px] font-bold text-[#0F172A] font-family-["Iosevka Charon"]'>Create an Account</h1>
+          <h1 className='text-lg sm:text-[24px] font-normal text-[#64748B] font-family-["Iosevka Charon"]'>Join Us Today</h1>
         </div>
         <div>
-          <form onSubmit={handleSubmit} className='flex flex-col gap-4 mt-6 w-100'>
+          <form onSubmit={handleSubmit} className='flex flex-col gap-4 mt-6 w-full max-w-sm'>
             <input
               type="text"
               placeholder='Enter your username'
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               ref={usernameErrorRef}
-              className='bg-[#F5F5F5] rounded-md p-1 h-10 outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all duration-200'
+              className='bg-[#F5F5F5] rounded-md p-2 h-10 w-full min-w-0 outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all duration-200'
             />
             <input
               type="email"
@@ -68,14 +68,14 @@ function Register() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               ref={emailErrorRef}
-              className='bg-[#F5F5F5] rounded-md p-1 h-10 outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all duration-200'
+              className='bg-[#F5F5F5] rounded-md p-2 h-10 w-full min-w-0 outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all duration-200'
             />
             <input
               type="password"
               placeholder='Enter your password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className='bg-[#F5F5F5] rounded-md p-1 h-10 outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all duration-200'
+              className='bg-[#F5F5F5] rounded-md p-2 h-10 w-full min-w-0 outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white transition-all duration-200'
             />
             <button type="submit" className="bg-blue-400 rounded-full p-1 cursor-pointer h-10 hover:scale-95 transition-transform" disabled={!(username && email && password)}>
               Register

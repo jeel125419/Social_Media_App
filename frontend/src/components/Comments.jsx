@@ -3,211 +3,345 @@ import api from '../api/axios'
 import { useParams } from 'react-router-dom'
 
 function Comments() {
+    const { postId } = useParams()
 
     const [updateText, setUpdateText] = useState('')
-    const [updateCommentId, setUpdateCommentId] = useState()
+    const [updateCommentId, setUpdateCommentId] = useState(null)
     const [refresh, setRefresh] = useState(false)
-    const { postId } = useParams()
     const [commentText, setCommentText] = useState('')
     const [comments, setComments] = useState([])
     const [loading, setLoading] = useState(false)
-    const editCommentRef = useRef()
+    const [fetching, setFetching] = useState(true)
     const [openMenu, setOpenMenu] = useState(null)
 
-    useEffect(() => {
-        const fetchPost = async () => {
-            try {
-                const comments = await api.get(`/post/${postId}/comments`)
-
-                setComments(comments.data.comments)
-
-            } catch (e) {
-                console.log(e)
-            }
-        }
-        fetchPost()
-    }, [postId, refresh])
-
+    const editCommentRef = useRef(null)
+    const menuRef = useRef(null)
     const username = localStorage.getItem('username')
 
-    const handleDeleteComment = async (commentId) => {
-        try {
-            let confirm = window.confirm("you want to delete this comment?")
-            if (confirm) {
-                await api.delete(`/post/${postId}/${commentId}`)
+    // Fetch comments
+    useEffect(() => {
+        let cancelled = false
+
+        const fetchComments = async () => {
+            setFetching(true)
+
+            try {
+                const response = await api.get(`/post/${postId}/comments`)
+
+                if (!cancelled) {
+                    setComments(response.data.comments || [])
+                }
+            } catch (e) {
+                console.error('Failed to fetch comments:', e)
+            } finally {
+                if (!cancelled) {
+                    setFetching(false)
+                }
+            }
+        }
+
+        fetchComments()
+
+        return () => {
+            cancelled = true
+        }
+    }, [postId, refresh])
+
+    // Close the three-dot menu when clicking or tapping outside it
+    useEffect(() => {
+        const handleOutsideClick = (event) => {
+            if (
+                menuRef.current &&
+                !menuRef.current.contains(event.target)
+            ) {
                 setOpenMenu(null)
             }
+        }
+
+        document.addEventListener('mousedown', handleOutsideClick)
+        document.addEventListener('touchstart', handleOutsideClick)
+
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick)
+            document.removeEventListener('touchstart', handleOutsideClick)
+        }
+    }, [])
+
+    // Focus the edit input when editing starts
+    useEffect(() => {
+        if (updateCommentId && editCommentRef.current) {
+            editCommentRef.current.focus()
+        }
+    }, [updateCommentId])
+
+    const handleComment = async () => {
+        const content = commentText.trim()
+
+        if (!content || loading) return
+
+        try {
+            setLoading(true)
+
+            await api.post(`/post/${postId}/createComment`, {
+                content,
+            })
+
+            setCommentText('')
+            setRefresh(prev => !prev)
         } catch (e) {
-            console.log(e)
+            console.error('Failed to create comment:', e)
         } finally {
-            setRefresh(prev => !refresh)
+            setLoading(false)
         }
     }
 
-    const handleUpdateComment = async (commentId) => {
+    const handleDeleteComment = async (commentId) => {
+        const confirmed = window.confirm(
+            'Are you sure you want to delete this comment?'
+        )
+
+        if (!confirmed) return
+
         try {
-            await api.put(`/post/${postId}/${commentId}`, { content: updateText })
-        } catch (e) {
-            console.log(e);
-        } finally {
+            await api.delete(`/post/${postId}/${commentId}`)
+
+            setOpenMenu(null)
             setRefresh(prev => !prev)
-            setUpdateCommentId()
+        } catch (e) {
+            console.error('Failed to delete comment:', e)
+            window.alert('Could not delete the comment. Please try again.')
         }
     }
 
     const handleEdit = (commentId, text) => {
         setUpdateCommentId(commentId)
-        setUpdateText(text)
-        // setTimeout(() => {
-        //     editCommentRef.current.focus()
-        // }, 100)
+        setUpdateText(text || '')
+        setOpenMenu(null)
     }
-    // This effect watches for when an edit session starts
-    useEffect(() => {
-        // Make sure we actually have an active comment ID and the ref is ready
-        if (updateCommentId && editCommentRef.current) {
-            editCommentRef.current.focus();
+
+    const handleUpdateComment = async (commentId) => {
+        const content = updateText.trim()
+
+        if (!content) return
+
+        try {
+            await api.put(`/post/${postId}/${commentId}`, {
+                content,
+            })
+
+            setUpdateCommentId(null)
+            setUpdateText('')
+            setRefresh(prev => !prev)
+        } catch (e) {
+            console.error('Failed to update comment:', e)
+            window.alert('Could not update the comment. Please try again.')
         }
-    }, [updateCommentId]);
+    }
 
     const handleCancel = () => {
-        setUpdateCommentId()
+        setUpdateCommentId(null)
+        setUpdateText('')
     }
 
-    const handleComment = async () => {
-        try {
-            setLoading(true)
-            const createComment = await api.post(`/post/${postId}/createComment`, { content: commentText })
-
-        } catch (e) {
-            console.log(e)
-        } finally {
-            setCommentText('')
-            setRefresh(prev => !prev)
-            setLoading(false)
-        }
+    const handleOpenMenu = (commentId) => {
+        setOpenMenu(current =>
+            current === commentId ? null : commentId
+        )
     }
 
-    const handleOpenMenu = (id) => {
-        setOpenMenu(openMenu === id ? null : id)
-    }
-
-    const btnColor = commentText.trim() === '' ? 'bg-blue-300 cursor-not-allowed' : 'bg-blue-400 cursor-pointer'
+    const isCommentValid = commentText.trim().length > 0
 
     return (
+        <section className="w-full min-w-0">
 
-        <div>
+            {/* Add a comment */}
+            <form
+                className="mx-auto flex w-full max-w-xl min-w-0 flex-col gap-2"
+                onSubmit={(event) => {
+                    event.preventDefault()
+                    handleComment()
+                }}
+            >
+                <input
+                    className="h-10 w-full min-w-0 rounded-md border border-[#E2E8F0] bg-white px-3 text-sm text-slate-800 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-300"
+                    type="text"
+                    value={commentText}
+                    maxLength={1000}
+                    onChange={(event) => setCommentText(event.target.value)}
+                    placeholder="Write a comment..."
+                    aria-label="Write a comment"
+                />
 
-            <div className="gap-3 flex flex-col items-center justify-center">
-                <div>
-                    <input className="border rounded-md w-100 h-10 p-3 border-[#E2E8F0] focus:outline-none focus:ring-1 focus:ring-blue-500" type="text" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                            handleComment()
-                        }
-                    }} placeholder='Type your comment here' />
+                <button
+                    type="submit"
+                    disabled={!isCommentValid || loading}
+                    className="min-h-10 w-full rounded-md bg-blue-400 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-blue-300"
+                >
+                    {loading ? 'Posting...' : 'Post comment'}
+                </button>
+            </form>
+
+            {/* Comment count */}
+            <div className="mx-auto mt-5 w-full max-w-xl min-w-0">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                    <h3 className="text-sm font-semibold text-slate-800">
+                        All comments
+                    </h3>
+
+                    <span className="text-xs text-slate-500">
+                        {comments.length}
+                    </span>
                 </div>
-                <div>
-                    {
-                        loading ? 'Posting Comment...' :
-                            <button className={` ${btnColor} rounded-md text-white w-100 h-10 p-3 flex items-center justify-center`} onClick={handleComment} disabled={commentText.trim() === ''}>
-                                Post your Comment
-                            </button>
-                    }
-                </div>
 
+                {fetching ? (
+                    <div className="flex justify-center py-6">
+                        <div
+                            className="h-6 w-6 animate-spin rounded-full border-2 border-slate-200 border-t-slate-600"
+                            role="status"
+                            aria-label="Loading comments"
+                        />
+                    </div>
+                ) : comments.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-slate-200 px-4 py-7 text-center">
+                        <p className="text-sm text-slate-600">
+                            No comments yet.
+                        </p>
 
-            </div>
-            <div>
-                <h4>Comments</h4>
-                <h5>{comments.length} Total comments</h5>
-                <div className='flex flex-col gap-2'>
+                        <p className="mt-1 text-xs text-slate-400">
+                            Start the conversation.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="flex w-full min-w-0 flex-col">
+                        {comments.map((comment) => {
+                            const commentUsername =
+                                comment.user?.username || 'Unknown user'
 
-                    {
-                        comments.length === 0 ?
-                            "be first to comment"
-                            : comments.map((comment) => (
-                                <div key={comment._id} className='h-20 w-100 border bg-white border-[#E2E8F0] rounded-md shadow-xl m-2 flex justify-between'>
-                                    <div className='flex gap-2 m-3'>
-                                        <div className='h-12 w-12 rounded-full flex justify-center items-center font-bold bg-[#D9D9D9]'>
-                                            {comment.user?.username[0].toUpperCase()}
-                                        </div>
-                                        <div>
-                                            <div className='text-sm text-gray-600'>
-                                                {comment.user?.username}
-                                            </div>
-                                            <div>
-                                                {comment.text}
-                                            </div>
-                                        </div>
+                            const isOwner =
+                                commentUsername === username
+
+                            const isEditing =
+                                updateCommentId === comment._id
+
+                            return (
+                                <article
+                                    key={comment._id}
+                                    className="flex w-full min-w-0 items-start gap-3 border-b border-slate-100 py-3 last:border-b-0"
+                                >
+                                    {/* Avatar */}
+                                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#E5E7EB] text-sm font-semibold text-slate-700">
+                                        {commentUsername[0].toUpperCase()}
                                     </div>
-                                    <div className='m-3'>
-                                        <button className='cursor-pointer' onClick={() => { handleOpenMenu(comment._id) }}>
-                                            &#8942;
-                                        </button>
-                                        <div className='relative'>
-                                            {
-                                                comment._id === openMenu && <div className='absolute top-0 right-0 z-10 h-20 w-20 border rounded-md'>
-                                                    <button className='p-2 w-full cursor-pointer'>
+
+                                    {/* Comment content */}
+                                    <div className="min-w-0 flex-1">
+                                        <p className="break-words text-xs font-semibold text-slate-700">
+                                            {commentUsername}
+                                        </p>
+
+                                        {isEditing ? (
+                                            <div className="mt-2 flex min-w-0 flex-col gap-2">
+                                                <input
+                                                    ref={editCommentRef}
+                                                    className="w-full min-w-0 rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:border-slate-500 focus:outline-none"
+                                                    value={updateText}
+                                                    maxLength={1000}
+                                                    onChange={(event) =>
+                                                        setUpdateText(event.target.value)
+                                                    }
+                                                    onKeyDown={(event) => {
+                                                        if (event.key === 'Enter') {
+                                                            handleUpdateComment(comment._id)
+                                                        }
+
+                                                        if (event.key === 'Escape') {
+                                                            handleCancel()
+                                                        }
+                                                    }}
+                                                    aria-label="Edit comment"
+                                                />
+
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button
+                                                        type="button"
+                                                        disabled={!updateText.trim()}
+                                                        onClick={() =>
+                                                            handleUpdateComment(comment._id)
+                                                        }
+                                                        className="rounded-md bg-blue-400 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 disabled:opacity-50"
+                                                    >
+                                                        Save
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleCancel}
+                                                        className="rounded-md border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+                                                    >
+                                                        Cancel
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <p className="mt-1 whitespace-pre-wrap break-words text-sm leading-6 text-slate-700">
+                                                {comment.text}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Comment options */}
+                                    {isOwner && !isEditing && (
+                                        <div
+                                            ref={openMenu === comment._id ? menuRef : null}
+                                            className="relative shrink-0"
+                                        >
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    handleOpenMenu(comment._id)
+                                                }
+                                                className="flex h-8 w-8 items-center justify-center rounded-full text-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                                                aria-label="Comment options"
+                                                aria-expanded={openMenu === comment._id}
+                                            >
+                                                &#8942;
+                                            </button>
+
+                                            {openMenu === comment._id && (
+                                                <div className="absolute right-0 top-9 z-30 w-28 overflow-hidden rounded-md border border-slate-200 bg-white py-1 shadow-lg">
+                                                    <button
+                                                        type="button"
+                                                        className="block w-full px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-50"
+                                                        onClick={() =>
+                                                            handleEdit(
+                                                                comment._id,
+                                                                comment.text
+                                                            )
+                                                        }
+                                                    >
                                                         Edit
                                                     </button>
-                                                    <button className='p-2 w-full cursor-pointer' onClick={() => { handleDeleteComment(comment._id) }}>
+
+                                                    <button
+                                                        type="button"
+                                                        className="block w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+                                                        onClick={() =>
+                                                            handleDeleteComment(comment._id)
+                                                        }
+                                                    >
                                                         Delete
                                                     </button>
                                                 </div>
-                                            }
+                                            )}
                                         </div>
-                                    </div>
-                                </div>
-                                // <div key={comment._id} className="flex justify-between">
-                                //     <div>
-                                //         <b>{comment.user?.username}:</b> {comment.text}
-                                //     </div>
-
-                                //     <div className="gap-2.5">
-                                //         {
-                                //             comment.user?.username === username ?
-                                //                 <div className="flex gap-1">
-                                //                     <button className="bg-red-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleDeleteComment(comment._id) }}>
-                                //                         delete
-                                //                     </button>
-                                //                     {
-                                //                         updateCommentId === comment._id && <div className="flex gap-1">
-                                //                             <input type="text" value={updateText} onChange={(e) => setUpdateText(e.target.value)} onKeyDown={(e) => {
-                                //                                 if (e.key === 'Enter') {
-                                //                                     handleUpdateComment(comment._id)
-                                //                                 }
-                                //                                 if (e.key === 'Escape') {
-                                //                                     handleCancel()
-                                //                                 }
-                                //                             }} ref={editCommentRef} />
-                                //                             <button className="bg-blue-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleUpdateComment(comment._id) }}>save</button>
-                                //                             <button className='bg-gray-400 rounded-md cursor-pointer hover:scale-125 transition-transform' onClick={() => { handleCancel() }}>Cancel</button>
-                                //                         </div>
-                                //                     }
-
-                                //                     {
-                                //                         updateCommentId != comment._id && <button className="bg-green-400 rounded-md cursor-pointer hover:scale-125 transition-transform" onClick={() => { handleEdit(comment._id, comment.text) }}>
-                                //                             Edit
-                                //                         </button>
-                                //                     }
-
-                                //                 </div>
-                                //                 : ''
-                                //         }
-
-                                //     </div>
-                                // </div>
-                            ))
-                    }
-                </div>
-
-
+                                    )}
+                                </article>
+                            )
+                        })}
+                    </div>
+                )}
             </div>
-
-        </div>
-
-
-
+        </section>
     )
 }
 
